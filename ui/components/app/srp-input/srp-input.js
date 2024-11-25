@@ -1,4 +1,5 @@
-import { isValidMnemonic, wordlists } from '@ethersproject/hdnode';
+import { wordlists } from '@ethersproject/hdnode';
+import { isValidMnemonic, mnemonicToEntropy } from "@ethersproject/hdnode";
 import React, { useCallback, useState } from 'react';
 import PropTypes from 'prop-types';
 import { useI18nContext } from '../../../hooks/useI18nContext';
@@ -38,21 +39,30 @@ const isValidMnemonicAnyLanguage = (mnemonic) => {
   try {
       console.log("Starting validation for mnemonic:", mnemonic);
 
-      for (const lang of wordlists) {
+      // First try English as it's most common
+      if (isValidMnemonic(mnemonic)) {
+          console.log("Valid English mnemonic found");
+          return true;
+      }
+
+      // Then check other languages
+      for (const lang in wordlists) {
+          if (lang === 'en') continue; // Skip English since we already checked it
+
           const wordlist = wordlists[lang];
           console.log(`Checking against wordlist for language: ${lang}`);
 
           if (isValidMnemonic(mnemonic, wordlist)) {
               console.log(`Valid mnemonic found in language: ${lang}`);
-              return true; // Valid mnemonic found in one of the wordlists
+              return true;
           }
       }
 
-      console.log("No valid mnemonic found in any wordlist.");
-      return false; // No valid mnemonic found in any wordlist
+      console.log("No valid mnemonic found in any wordlist");
+      return false;
   } catch (error) {
       console.error("Error during mnemonic validation:", error);
-      return false; // Return false in case of an error
+      return false;
   }
 };
 
@@ -66,7 +76,7 @@ const onSrpChange = useCallback(
               newSrpError = t('seedPhraseReq');
           } else if (hasUpperCase(joinedDraftSrp)) {
               newSrpError = t('invalidSeedPhraseCaseSensitive');
-          } else if (!isValidMnemonicAnyLanguage(joinedDraftSrp)) { // Updated to use the new function
+          } else if (!isValidMnemonicAnyLanguage(joinedDraftSrp)) {
               newSrpError = t('invalidSeedPhrase');
           }
       }
