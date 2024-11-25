@@ -1,4 +1,4 @@
-import { isValidMnemonic } from '@ethersproject/hdnode';
+import { isValidMnemonic, wordlists } from '@ethersproject/hdnode';
 import React, { useCallback, useState } from 'react';
 import PropTypes from 'prop-types';
 import { useI18nContext } from '../../../hooks/useI18nContext';
@@ -33,27 +33,50 @@ export default function SrpInput({ onChange, srpText }) {
 
   const t = useI18nContext();
 
-  const onSrpChange = useCallback(
-    (newDraftSrp) => {
+// Add the isValidMnemonicAnyLanguage function here
+const isValidMnemonicAnyLanguage = (mnemonic) => {
+  try {
+      console.log("Starting validation for mnemonic:", mnemonic);
+
+      for (const lang of wordlists) {
+          const wordlist = wordlists[lang];
+          console.log(`Checking against wordlist for language: ${lang}`);
+
+          if (isValidMnemonic(mnemonic, wordlist)) {
+              console.log(`Valid mnemonic found in language: ${lang}`);
+              return true; // Valid mnemonic found in one of the wordlists
+          }
+      }
+
+      console.log("No valid mnemonic found in any wordlist.");
+      return false; // No valid mnemonic found in any wordlist
+  } catch (error) {
+      console.error("Error during mnemonic validation:", error);
+      return false; // Return false in case of an error
+  }
+};
+
+const onSrpChange = useCallback(
+  (newDraftSrp) => {
       let newSrpError = '';
       const joinedDraftSrp = newDraftSrp.join(' ').trim();
 
       if (newDraftSrp.some((word) => word !== '')) {
-        if (newDraftSrp.some((word) => word === '')) {
-          newSrpError = t('seedPhraseReq');
-        } else if (hasUpperCase(joinedDraftSrp)) {
-          newSrpError = t('invalidSeedPhraseCaseSensitive');
-        } else if (!isValidMnemonic(joinedDraftSrp)) {
-          newSrpError = t('invalidSeedPhrase');
-        }
+          if (newDraftSrp.some((word) => word === '')) {
+              newSrpError = t('seedPhraseReq');
+          } else if (hasUpperCase(joinedDraftSrp)) {
+              newSrpError = t('invalidSeedPhraseCaseSensitive');
+          } else if (!isValidMnemonicAnyLanguage(joinedDraftSrp)) { // Updated to use the new function
+              newSrpError = t('invalidSeedPhrase');
+          }
       }
 
       setDraftSrp(newDraftSrp);
       setSrpError(newSrpError);
       onChange(newSrpError ? '' : joinedDraftSrp);
-    },
-    [setDraftSrp, setSrpError, t, onChange],
-  );
+  },
+  [setDraftSrp, setSrpError, t, onChange],
+);
 
   const toggleShowSrp = useCallback((index) => {
     setShowSrp((currentShowSrp) => {
