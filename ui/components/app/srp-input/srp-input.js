@@ -15,6 +15,9 @@ import {
 } from '../../../helpers/constants/design-system';
 import { parseSecretRecoveryPhrase } from './parse-secret-recovery-phrase';
 
+// Log available wordlists on initialization
+console.log('Available wordlists:', Object.keys(wordlists));
+
 const defaultNumberOfWords = 12;
 
 const hasUpperCase = (draftSrp) => {
@@ -71,13 +74,22 @@ const onSrpChange = useCallback(
       let newSrpError = '';
       const joinedDraftSrp = newDraftSrp.join(' ').trim();
 
+      console.log("Processing SRP change:", {
+        numberOfWords: newDraftSrp.length,
+        hasEmptyWords: newDraftSrp.some((word) => word === ''),
+        hasContent: newDraftSrp.some((word) => word !== '')
+      });
+
       if (newDraftSrp.some((word) => word !== '')) {
           if (newDraftSrp.some((word) => word === '')) {
               newSrpError = t('seedPhraseReq');
+              console.log("Error: Incomplete seed phrase");
           } else if (hasUpperCase(joinedDraftSrp)) {
               newSrpError = t('invalidSeedPhraseCaseSensitive');
+              console.log("Error: Contains uppercase characters");
           } else if (!isValidMnemonicAnyLanguage(joinedDraftSrp)) {
               newSrpError = t('invalidSeedPhrase');
+              console.log("Error: Invalid mnemonic");
           }
       }
 
@@ -103,6 +115,8 @@ const onSrpChange = useCallback(
 
   const onSrpWordChange = useCallback(
     (index, newWord) => {
+      console.log(`Word ${index + 1} changed:`, newWord);
+
       if (pasteFailed) {
         setPasteFailed(false);
       }
@@ -115,10 +129,13 @@ const onSrpChange = useCallback(
 
   const onSrpPaste = useCallback(
     (rawSrp) => {
+      console.log("Processing pasted SRP");
+
       const parsedSrp = parseSecretRecoveryPhrase(rawSrp);
       let newDraftSrp = parsedSrp.split(' ');
 
       if (newDraftSrp.length > 24) {
+        console.log("Paste failed: Too many words", newDraftSrp.length);
         setPasteFailed(true);
         return;
       } else if (pasteFailed) {
@@ -135,6 +152,7 @@ const onSrpChange = useCallback(
           newNumberOfWords =
             newDraftSrp.length + (3 - (newDraftSrp.length % 3));
         }
+        console.log("Adjusting number of words to:", newNumberOfWords);
         setNumberOfWords(newNumberOfWords);
       }
 
