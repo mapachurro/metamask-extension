@@ -33,7 +33,7 @@ export default function SrpInput({ onChange, srpText }) {
 
   const t = useI18nContext();
 
-// Add the isValidMnemonicAnyLanguage function here
+// Function to specify we're checking against all wordlists, not just English
 const isValidMnemonicAnyLanguage = (mnemonic) => {
   try {
       console.log("Starting validation for mnemonic:", mnemonic);
